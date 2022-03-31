@@ -13,30 +13,50 @@ def main():
 
     clock = pygame.time.Clock()
 
-    background = pygame.image.load('Images/background-game.png').convert_alpha()
-    background_menu = pygame.image.load('Images/background-menu.png').convert_alpha()
-    start_text = pygame.image.load('Images/start-text.png').convert_alpha()
+    background = pygame.image.load('Images/Others/background-game.png').convert_alpha()
+    background_menu = pygame.image.load('Images/Others/background-menu.png').convert_alpha()
+    start_text = pygame.image.load('Images/Others/start-text.png').convert_alpha()
     start_text_rect = start_text.get_rect(midbottom = (800, 750))
 
-    sword_attack_1 = pygame.image.load('Images/attack state 1.png').convert_alpha()
-    sword_attack_2 = pygame.image.load('Images/attack state 2.png').convert_alpha()
-    sword_attack_3 = pygame.image.load('Images/attack state 3.png').convert_alpha()
-    sword_attack_4 = pygame.image.load('Images/attack state 4.png').convert_alpha()
-    sword_attack_5 = pygame.image.load('Images/attack state 5.png').convert_alpha()
+    sword_attack_1 = pygame.image.load('Images/Swords/attack_1.png').convert_alpha()
+    sword_attack_2 = pygame.image.load('Images/Swords/attack_2.png').convert_alpha()
+    sword_attack_3 = pygame.image.load('Images/Swords/attack_3.png').convert_alpha()
+    sword_attack_4 = pygame.image.load('Images/Swords/attack_4.png').convert_alpha()
+    sword_attack_5 = pygame.image.load('Images/Swords/attack_5.png').convert_alpha()
+    sword_attack_6 = pygame.image.load('Images/Swords/attack_6.png').convert_alpha()
+    sword_attack_7 = pygame.image.load('Images/Swords/attack_7.png').convert_alpha()
+    sword_attack_8 = pygame.image.load('Images/Swords/attack_8.png').convert_alpha()
+    sword_attack_9 = pygame.image.load('Images/Swords/attack_9.png').convert_alpha()
+    sword_attack_10 = pygame.image.load('Images/Swords/attack_10.png').convert_alpha()
+    sword_attack_11 = pygame.image.load('Images/Swords/attack_11.png').convert_alpha()
+    sword_attack_12 = pygame.image.load('Images/Swords/attack_12.png').convert_alpha()
+    sword_attack_13 = pygame.image.load('Images/Swords/attack_13.png').convert_alpha()
+    sword_attack_14 = pygame.image.load('Images/Swords/attack_14.png').convert_alpha()
+    sword_attack_15 = pygame.image.load('Images/Swords/attack_15.png').convert_alpha()
 
     flipped_sword_1 = pygame.transform.flip(sword_attack_1, True, False)
     flipped_sword_2 = pygame.transform.flip(sword_attack_2, True, False)
     flipped_sword_3 = pygame.transform.flip(sword_attack_3, True, False)
     flipped_sword_4 = pygame.transform.flip(sword_attack_4, True, False)
     flipped_sword_5 = pygame.transform.flip(sword_attack_5, True, False)
+    flipped_sword_6 = pygame.transform.flip(sword_attack_6, True, False)
+    flipped_sword_7 = pygame.transform.flip(sword_attack_7, True, False)
+    flipped_sword_8 = pygame.transform.flip(sword_attack_8, True, False)
+    flipped_sword_9 = pygame.transform.flip(sword_attack_9, True, False)
+    flipped_sword_10 = pygame.transform.flip(sword_attack_10, True, False)
+    flipped_sword_11 = pygame.transform.flip(sword_attack_11, True, False)
+    flipped_sword_12 = pygame.transform.flip(sword_attack_12, True, False)
+    flipped_sword_13 = pygame.transform.flip(sword_attack_13, True, False)
+    flipped_sword_14 = pygame.transform.flip(sword_attack_14, True, False)
+    flipped_sword_15 = pygame.transform.flip(sword_attack_15, True, False)
 
-    sword_attacks = [sword_attack_1, sword_attack_2, sword_attack_3, sword_attack_4, sword_attack_5]
-    sword_attacks_flipped = [flipped_sword_1, flipped_sword_2, flipped_sword_3, flipped_sword_4, flipped_sword_5]
+    sword_attacks = [sword_attack_15, sword_attack_14, sword_attack_13, sword_attack_12, sword_attack_11, sword_attack_10, sword_attack_9, sword_attack_8, sword_attack_7, sword_attack_6, sword_attack_5, sword_attack_4, sword_attack_3, sword_attack_2, sword_attack_1]
+    sword_attacks_flipped = [flipped_sword_15, flipped_sword_14, flipped_sword_13, flipped_sword_12, flipped_sword_11, flipped_sword_10, flipped_sword_9, flipped_sword_8, flipped_sword_7, flipped_sword_6, flipped_sword_5, flipped_sword_4, flipped_sword_3, flipped_sword_2, flipped_sword_1]
 
-    blue_wrath = pygame.image.load('Images/blue-wrath-2.png').convert_alpha()
-    green_wrath = pygame.image.load('Images/green-wrath-2.png').convert_alpha()
-    pink_wrath = pygame.image.load('Images/pink-wrath-2.png').convert_alpha()
-    red_wrath = pygame.image.load('Images/red-wrath-2.png').convert_alpha()
+    blue_wrath = pygame.image.load('Images/Wraths/blue-wrath-2.png').convert_alpha()
+    green_wrath = pygame.image.load('Images/Wraths/green-wrath-2.png').convert_alpha()
+    pink_wrath = pygame.image.load('Images/Wraths/pink-wrath-2.png').convert_alpha()
+    red_wrath = pygame.image.load('Images/Wraths/red-wrath-2.png').convert_alpha()
 
 
     #   Pressed keys templates, each player will have assigned some keys to move with, and these are hard coded here
@@ -83,7 +103,7 @@ def main():
             self.image_flipped = pygame.transform.flip(self.image, True, False)
             self.is_flipped = False
             self.attacked = False
-            self.cooldown = 0
+            self.cooldown = 15
             self.rectangle = self.image.get_rect(center = (self.x, self.y))
 
         def jump(self):
@@ -200,20 +220,20 @@ def main():
 
         def attack(self):
             if self.attacked:
-                self.cooldown += 1
+                self.cooldown -= 1
                 if self.is_flipped:
-                    if self.cooldown >= 30:
+                    if self.cooldown <= 0:
                         self.attacked = False
-                        self.cooldown = 0
-                    if self.cooldown >= 1:
-                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks_flipped[2], self.name)
+                        self.cooldown = 15
+                    else:
+                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks_flipped[self.cooldown - 1], self.name)
                         WIN.blit(current_sword.image, (self.rectangle.x - 68, self.rectangle.y + 50))
                 else: 
-                    if self.cooldown >= 30:
+                    if self.cooldown <= 0:
                         self.attacked = False
-                        self.cooldown = 0
-                    if self.cooldown >= 1:
-                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks[2], self.name)
+                        self.cooldown = 15
+                    else:
+                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks[self.cooldown - 1], self.name)
                         WIN.blit(current_sword.image, (self.rectangle.center))
 
 

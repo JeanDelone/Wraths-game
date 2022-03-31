@@ -1,6 +1,3 @@
-from tkinter import W
-
-
 def main():
 
     import pygame
@@ -25,13 +22,21 @@ def main():
     sword_attack_2 = pygame.image.load('Images/attack state 2.png').convert_alpha()
     sword_attack_3 = pygame.image.load('Images/attack state 3.png').convert_alpha()
     sword_attack_4 = pygame.image.load('Images/attack state 4.png').convert_alpha()
+    sword_attack_5 = pygame.image.load('Images/attack state 5.png').convert_alpha()
 
-    sword_attacks = [sword_attack_1, sword_attack_2, sword_attack_3, sword_attack_4]
+    flipped_sword_1 = pygame.transform.flip(sword_attack_1, True, False)
+    flipped_sword_2 = pygame.transform.flip(sword_attack_2, True, False)
+    flipped_sword_3 = pygame.transform.flip(sword_attack_3, True, False)
+    flipped_sword_4 = pygame.transform.flip(sword_attack_4, True, False)
+    flipped_sword_5 = pygame.transform.flip(sword_attack_5, True, False)
 
-    blue_wrath = pygame.image.load('Images/blue-wrath-1.png').convert_alpha()
-    green_wrath = pygame.image.load('Images/green-wrath-1.png').convert_alpha()
-    pink_wrath = pygame.image.load('Images/pink-wrath-1.png').convert_alpha()
-    red_wrath = pygame.image.load('Images/red-wrath-1.png').convert_alpha()
+    sword_attacks = [sword_attack_1, sword_attack_2, sword_attack_3, sword_attack_4, sword_attack_5]
+    sword_attacks_flipped = [flipped_sword_1, flipped_sword_2, flipped_sword_3, flipped_sword_4, flipped_sword_5]
+
+    blue_wrath = pygame.image.load('Images/blue-wrath-2.png').convert_alpha()
+    green_wrath = pygame.image.load('Images/green-wrath-2.png').convert_alpha()
+    pink_wrath = pygame.image.load('Images/pink-wrath-2.png').convert_alpha()
+    red_wrath = pygame.image.load('Images/red-wrath-2.png').convert_alpha()
 
 
     #   Pressed keys templates, each player will have assigned some keys to move with, and these are hard coded here
@@ -53,60 +58,54 @@ def main():
                     "right": False,
                     "r_control": False}
 
-
     class Sword:
 
-        def __init__(self, x, y, owner):
+        def __init__(self, x, y, image, owner):
             self.x = x
             self.y = y
+            self.image = image
             self.owner = owner
-            self.frames_left = 30
-            self.image = sword_attacks[0]
-            self.rectangle = self.image.get_rect(topleft = (self.x, self.y))
-
-        def show(self):
-            WIN.blit(self.image, self.rectangle(topleft = (self.x, self.y)))
+            self.rectangle = self.image.get_rect(center = (self.x, self.y))
 
     class Wrath:
 
         # x and y are starting positions for the player, image is image that is supposed to be loaded and pressed_keys is key preset declared before
         # 
-        def __init__(self, x, y, image, pressed_keys):
+        def __init__(self, name, x, y, image, pressed_keys):
+            self.name = name
             self.x = x
             self.y = y
             self.image = image
             self.pressed_keys = pressed_keys
             self.x_velocity = 10
             self.y_velocity = 0
-            self.gravity = 0
             self.jumps_left = 3
             self.image_flipped = pygame.transform.flip(self.image, True, False)
             self.is_flipped = False
-            self.is_hit = False
             self.attacked = False
-            self.rectangle = self.image.get_rect(topleft = (self.x, self.y))
+            self.cooldown = 0
+            self.rectangle = self.image.get_rect(center = (self.x, self.y))
 
         def jump(self):
             if self.jumps_left > 0:
                 self.jumps_left -= 1
-                self.gravity = 0
                 self.y_velocity = -20
 
-        def attack(self):
-            sword = Sword(self.x, self.y, self.image)
+
     #   natural_move() implicates gravity, makes sure that player won't go outside map, and resets jumps when player hits ground
         def natural_move(self):
             self.y_velocity += 1.2
             self.rectangle.y += self.y_velocity
             # This makes sure that player is always above 700 lvl, which is floor lvl
-            if self.rectangle.y >= 700:
-                self.rectangle.y = 700
+            if self.rectangle.y >= HEIGHT - 200:
+                self.rectangle.y = HEIGHT - 200
                 self.jumps_left = 3
             # This make sure that player doesn't go beyond walls
-            if self.rectangle.left <= 20:
-                self.rectangle.left = 20
-            if self.rectangle.right >= 1580:
-                self.rectangle.right = 1580
+            if self.rectangle.left <= 0:
+                self.rectangle.left = 0
+            if self.rectangle.right >= WIDTH:
+                self.rectangle.right = WIDTH
+
 
 
     #   There are 2 functions: move_swtich() and move(), each one of them serves purpose to move the player,
@@ -125,8 +124,6 @@ def main():
                         self.is_flipped = False
                     if event.key == pygame.K_s:
                         self.pressed_keys["s"] = True
-                    if event.key == pygame.K_SPACE:
-                        WIN.blit(sword_attacks[0], (200,200))
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_a:
                         self.pressed_keys["a"] = False
@@ -135,7 +132,7 @@ def main():
                     if event.key == pygame.K_s:
                         self.pressed_keys["s"] = False
                     if event.key == pygame.K_SPACE:
-                        WIN.blit(sword_attacks[0], (200,200))
+                        self.attacked = True
             else:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
@@ -172,18 +169,69 @@ def main():
                 if self.pressed_keys["down"] == True:
                     self.rectangle.y += 5
 
+        # def attack(self):
+        #     if self.attacked:
+        #         self.cooldown += 1
+        #         if self.is_flipped:
+        #             if self.cooldown >= 15:
+        #                 self.attacked = False
+        #                 self.cooldown = 0
+        #             elif self.cooldown >= 12:
+        #                 # those numbers: 68 and 50 came from width and height of the Wrath image,  im starting at topleft and move these coordinates to match flipped image
+        #                 WIN.blit(sword_attacks_flipped[3], (self.rectangle.x - 68, self.rectangle.y +50))
+        #             elif self.cooldown >= 8:
+        #                 WIN.blit(sword_attacks_flipped[2], (self.rectangle.x - 68, self.rectangle.y +50))
+        #             elif self.cooldown >= 4:
+        #                 WIN.blit(sword_attacks_flipped[1], (self.rectangle.x - 68, self.rectangle.y +50))
+        #             elif self.cooldown >= 1:
+        #                 WIN.blit(sword_attacks_flipped[0], (self.rectangle.x - 68, self.rectangle.y +50))
+        #         else:
+        #             if self.cooldown >= 15:
+        #                 self.attacked = False
+        #                 self.cooldown = 0
+        #             elif self.cooldown >= 12:
+        #                 WIN.blit(sword_attacks[3], (self.rectangle.center))
+        #             elif self.cooldown >= 8:
+        #                 WIN.blit(sword_attacks[2], (self.rectangle.center))
+        #             elif self.cooldown >= 4:
+        #                 WIN.blit(sword_attacks[1], (self.rectangle.center))
+        #             elif self.cooldown >= 1:
+        #                 WIN.blit(sword_attacks[0], (self.rectangle.center))
+
+        def attack(self):
+            if self.attacked:
+                self.cooldown += 1
+                if self.is_flipped:
+                    if self.cooldown >= 30:
+                        self.attacked = False
+                        self.cooldown = 0
+                    if self.cooldown >= 1:
+                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks_flipped[2], self.name)
+                        WIN.blit(current_sword.image, (self.rectangle.x - 68, self.rectangle.y + 50))
+                else: 
+                    if self.cooldown >= 30:
+                        self.attacked = False
+                        self.cooldown = 0
+                    if self.cooldown >= 1:
+                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks[2], self.name)
+                        WIN.blit(current_sword.image, (self.rectangle.center))
+
+
         def draw_image(self):
             if self.is_flipped:
                 WIN.blit(self.image_flipped, self.rectangle)
+                self.attack()
+                
             else:
                 WIN.blit(self.image, self.rectangle)
+                self.attack()
 
 
 
 
     # Place to inicialize players
-    red_wrath_1 = Wrath(500,600, red_wrath, key_presses_1)
-    pink_wrath_1 = Wrath(1100,600, pink_wrath, key_presses_2)
+    red_wrath_1 = Wrath("red", 500,600, green_wrath, key_presses_1)
+    pink_wrath_1 = Wrath("pink", 1100,600, blue_wrath, key_presses_2)
 
     # Game active state determines if player is in the menu or in the game
     game_active = False
@@ -226,12 +274,9 @@ def main():
             WIN.blit(background_menu, (0,0))
             WIN.blit(start_text, start_text_rect)
 
-            
-
 
         pygame.display.update()
         clock.tick(FPS)
-
 
 
 if __name__ == '__main__':

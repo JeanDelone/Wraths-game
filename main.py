@@ -78,6 +78,10 @@ def main():
                     "right": False,
                     "r_control": False}
 
+
+    # In this list there will be dynamically added and removed Sword objects that both players can generate, in main game loop each time player will check for collision from every item in this list
+    current_sword_list = []
+
     class Sword:
 
         def __init__(self, x, y, image, owner):
@@ -85,7 +89,7 @@ def main():
             self.y = y
             self.image = image
             self.owner = owner
-            self.rectangle = self.image.get_rect(center = (self.x, self.y))
+            self.rectangle = self.image.get_rect(topleft = (self.x, self.y))
 
     class Wrath:
 
@@ -172,6 +176,8 @@ def main():
                         self.pressed_keys["left"] = False
                     if event.key == pygame.K_RIGHT:
                         self.pressed_keys["right"] = False
+                    if event.key == pygame.K_RCTRL:
+                        self.attacked = True
 
         def move(self):
             if self.pressed_keys == key_presses_1:
@@ -189,35 +195,6 @@ def main():
                 if self.pressed_keys["down"] == True:
                     self.rectangle.y += 5
 
-        # def attack(self):
-        #     if self.attacked:
-        #         self.cooldown += 1
-        #         if self.is_flipped:
-        #             if self.cooldown >= 15:
-        #                 self.attacked = False
-        #                 self.cooldown = 0
-        #             elif self.cooldown >= 12:
-        #                 # those numbers: 68 and 50 came from width and height of the Wrath image,  im starting at topleft and move these coordinates to match flipped image
-        #                 WIN.blit(sword_attacks_flipped[3], (self.rectangle.x - 68, self.rectangle.y +50))
-        #             elif self.cooldown >= 8:
-        #                 WIN.blit(sword_attacks_flipped[2], (self.rectangle.x - 68, self.rectangle.y +50))
-        #             elif self.cooldown >= 4:
-        #                 WIN.blit(sword_attacks_flipped[1], (self.rectangle.x - 68, self.rectangle.y +50))
-        #             elif self.cooldown >= 1:
-        #                 WIN.blit(sword_attacks_flipped[0], (self.rectangle.x - 68, self.rectangle.y +50))
-        #         else:
-        #             if self.cooldown >= 15:
-        #                 self.attacked = False
-        #                 self.cooldown = 0
-        #             elif self.cooldown >= 12:
-        #                 WIN.blit(sword_attacks[3], (self.rectangle.center))
-        #             elif self.cooldown >= 8:
-        #                 WIN.blit(sword_attacks[2], (self.rectangle.center))
-        #             elif self.cooldown >= 4:
-        #                 WIN.blit(sword_attacks[1], (self.rectangle.center))
-        #             elif self.cooldown >= 1:
-        #                 WIN.blit(sword_attacks[0], (self.rectangle.center))
-
         def attack(self):
             if self.attacked:
                 self.cooldown -= 1
@@ -227,6 +204,8 @@ def main():
                         self.cooldown = 15
                     else:
                         current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks_flipped[self.cooldown - 1], self.name)
+                        current_sword_list.append(current_sword)
+                        # those numbers: 68 and 50 came from width and height of the Wrath image,  im starting at topleft and move these coordinates to match flipped image
                         WIN.blit(current_sword.image, (self.rectangle.x - 68, self.rectangle.y + 50))
                 else: 
                     if self.cooldown <= 0:
@@ -234,10 +213,19 @@ def main():
                         self.cooldown = 15
                     else:
                         current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks[self.cooldown - 1], self.name)
+                        current_sword_list.append(current_sword)
+                        # print(current_sword_list)
                         WIN.blit(current_sword.image, (self.rectangle.center))
 
+        def sword_collision(self):
+            for sword in current_sword_list:
+                if self.rectangle.colliderect(sword.rectangle) and sword.owner != self.name:
+                    # self.y = 500
+                    self.rectangle.y = 500
+                    print(f"COLLISION! {self.name} collided with {sword.owner}'s sword")
 
         def draw_image(self):
+            self.sword_collision()
             if self.is_flipped:
                 WIN.blit(self.image_flipped, self.rectangle)
                 self.attack()
@@ -250,8 +238,8 @@ def main():
 
 
     # Place to inicialize players
-    red_wrath_1 = Wrath("red", 500,600, green_wrath, key_presses_1)
-    pink_wrath_1 = Wrath("pink", 1100,600, blue_wrath, key_presses_2)
+    red_wrath_1 = Wrath("red", 500,600, red_wrath, key_presses_1)
+    pink_wrath_1 = Wrath("pink", 1100,600, pink_wrath, key_presses_2)
 
     # Game active state determines if player is in the menu or in the game
     game_active = False
@@ -281,7 +269,7 @@ def main():
             # if red_wrath_1.rectangle.colliderect(pink_wrath_1.rectangle):
             #     if red_wrath_1.rectangle.right > pink_wrath_1.rectangle.left and red_wrath_1.rectangle.left < pink_wrath_1.rectangle.right:
             #         red_wrath_1.rectangle.right = pink_wrath_1.rectangle.left
-
+            current_sword_list.clear()
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

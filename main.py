@@ -11,9 +11,17 @@ def main():
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
     FPS = 60
 
+    default_hit_cooldown = 60
+    default_hit_points = 100
+    default_hits_power = 3
+
+    first_player_starting_position = (300,500)
+    second_player_starting_position = (WIDTH - 300,500)
+
     clock = pygame.time.Clock()
 
     background = pygame.image.load('Images/Others/background-game.png').convert_alpha()
+    background_2 = pygame.image.load('Images/Others/background-game-2.png').convert_alpha()
     background_menu = pygame.image.load('Images/Others/background-menu.png').convert_alpha()
     start_text = pygame.image.load('Images/Others/start-text.png').convert_alpha()
     start_text_rect = start_text.get_rect(midbottom = (800, 750))
@@ -111,6 +119,10 @@ def main():
             self.attacked = False
             self.cooldown = 15
             self.rectangle = self.image.get_rect(center = (self.x, self.y))
+            self.is_hit = False
+            self.hit_cooldown = default_hit_cooldown
+            self.hp = default_hit_points
+
 
         def jump(self):
             if self.jumps_left > 0:
@@ -120,12 +132,21 @@ def main():
 
     #   natural_move() implicates gravity, makes sure that player won't go outside map, and resets jumps when player hits ground
         def natural_move(self):
+            # Checks if player is hit, if so, it applies cooldown to prevent hitting player multiple times in few frames
+            if self.is_hit:
+                self.hit_cooldown -= 1
+                if self.hit_cooldown == 1:
+                    self.is_hit = False
+                    self.hit_cooldown = default_hit_cooldown
+            # Player after getting hit, has applies big x_velocity, this if statement reduces it every frame
             if self.x_velocity != 0:
                 if self.x_velocity < 0.1 and self.x_velocity > -0.1:
                     self.x_velocity = 0
                 self.x_velocity = self.x_velocity / 1.1
             else:
                 self.rectangle.x += self.x_velocity
+
+            # Gravity and moving player
             self.y_velocity += 1.2
             self.rectangle.x += self.x_velocity
             self.rectangle.y += self.y_velocity
@@ -133,12 +154,17 @@ def main():
             if self.rectangle.y >= HEIGHT - 200:
                 self.rectangle.y = HEIGHT - 200
                 self.jumps_left = 3
-            # This make sure that player doesn't go beyond walls
-            if self.rectangle.left <= 0:
-                self.rectangle.left = 0
-            if self.rectangle.right >= WIDTH:
-                self.rectangle.right = WIDTH
-
+            # This make sure that player doesn't go beyond walls and takes hp when standing too close to it
+            if self.rectangle.left <= 30:
+                self.hp -= 0.25
+                if self.rectangle.left <= 0:
+                    self.rectangle.left = 0
+                    self.x_velocity = - self.x_velocity
+            elif self.rectangle.right >= WIDTH - 30:
+                self.hp -= 0.25
+                if self.rectangle.right >= WIDTH:
+                    self.rectangle.right = WIDTH
+                    self.x_velocity = - self.x_velocity
 
 
     #   There are 2 functions: move_swtich() and move(), each one of them serves purpose to move the player,
@@ -207,57 +233,55 @@ def main():
         def attack(self):
             if self.attacked:
                 self.cooldown -= 1
-                if self.is_flipped:
-                    if self.cooldown <= 0:
-                        self.attacked = False
-                        self.cooldown = 15
-                    else:
-                        # Numbers that are added to rectangle.x and y are here to initiate sword at exactly middle of the player
-                        current_sword = Sword(self.rectangle.x -68, self.rectangle.y +49, sword_attacks_flipped[self.cooldown - 1], self.name, is_flipped=True)
-                        current_sword_list.append(current_sword)
-                        # print(f"F Sword topright: {current_sword_list[0].rectangle.topright}, {self.name}'s center:{self.rectangle.center}")
-                        WIN.blit(current_sword.image, (current_sword.x, current_sword.y))
-                else: 
-                    if self.cooldown <= 0:
-                        self.attacked = False
-                        self.cooldown = 15
-                    else:
-                        current_sword = Sword(self.rectangle.x +34, self.rectangle.y +50, sword_attacks[self.cooldown - 1], self.name)
-                        current_sword_list.append(current_sword)
-                        # print(f"NF Sword topleft: {current_sword_list[0].rectangle.topleft}, {self.name}'s center:{self.rectangle.center}")
-                        WIN.blit(current_sword.image, (self.rectangle.center))
 
-        # This is to repair
-        # !!!!!!!!!!!!!!!!!!
-        # Currently 2nd player's sword cant detect 1st player, 2nd player behaves weirdly on collision
+                if self.cooldown <= 0:
+                    self.attacked = False
+                    self.cooldown = 15
+                
+
+                elif self.is_flipped:
+                    # Numbers that are added to rectangle.x and y are here to initiate sword at exactly middle of the player
+                    current_sword = Sword(self.rectangle.x -68, self.rectangle.y +49, sword_attacks_flipped[self.cooldown - 1], self.name, is_flipped=True)
+                    current_sword_list.append(current_sword)
+                    # print(f"F Sword topright: {current_sword_list[0].rectangle.topright}, {self.name}'s center:{self.rectangle.center}")
+                    WIN.blit(current_sword.image, (current_sword.x, current_sword.y))
+                else: 
+                    current_sword = Sword(self.rectangle.x +34, self.rectangle.y +50, sword_attacks[self.cooldown - 1], self.name)
+                    current_sword_list.append(current_sword)
+                    # print(f"NF Sword topleft: {current_sword_list[0].rectangle.topleft}, {self.name}'s center:{self.rectangle.center}")
+                    WIN.blit(current_sword.image, (self.rectangle.center))
+
         def sword_collision(self):
             for sword in current_sword_list:
-                if self.rectangle.colliderect(sword.rectangle) and sword.owner != self.name:
-                    if sword.is_flipped:
-                        self.y_velocity = -15
-                        self.x_velocity -= 50
-                        print(f"FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
-                    else:
-                        self.y_velocity = -15
-                        self.x_velocity += 50
-                        print(f"NON FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
+                if self.is_hit == False:
+                    if self.rectangle.colliderect(sword.rectangle) and sword.owner != self.name:
+                        self.is_hit = True
+                        if sword.is_flipped:
+                            self.y_velocity = -((101 - self.hp) * default_hits_power) / 6
+                            self.x_velocity -= ((101 - self.hp) * default_hits_power) / 1.3
+                            print(f"FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
+                        else:
+                            self.y_velocity = -((101 - self.hp) * default_hits_power) / 6
+                            self.x_velocity += ((101 - self.hp) * default_hits_power) / 1.3
+                            print(f"NON FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
+                        self.hp -= 10
 
         def draw_image(self):
             self.sword_collision()
             if self.is_flipped:
                 WIN.blit(self.image_flipped, self.rectangle)
-                self.attack()
-                
             else:
                 WIN.blit(self.image, self.rectangle)
-                self.attack()
+            self.attack()
+            print(f"{self.name}'hp is: {self.hp}")
+
 
 
 
 
     # Place to inicialize players
-    green_wrath_1 = Wrath("green", 300, 300, green_wrath, key_presses_2)
-    blue_wrath_1 = Wrath("blue", 900, 300, blue_wrath, key_presses_1)
+    green_wrath_1 = Wrath("green", first_player_starting_position[0], first_player_starting_position[1], green_wrath, key_presses_2)
+    blue_wrath_1 = Wrath("blue", second_player_starting_position[0], second_player_starting_position[1], blue_wrath, key_presses_1)
 
     # Game active state determines if player is in the menu or in the game
     game_active = False
@@ -277,8 +301,9 @@ def main():
             green_wrath_1.move()
             blue_wrath_1.move()
 
-            WIN.blit(background, (0,0))
+            WIN.blit(background_2, (0,0))
 
+            # There is a bug exactly in the 3 lines below that i cannot detect. Basically, there should be only 2 lines, when there is 2, second lane does'nt work. Only if I duplicate 1st line and copy it to 3rd line, code works properly. Without it, whatever character is in 2nd line, he is immune to sword.
             blue_wrath_1.draw_image()
             green_wrath_1.draw_image()
             blue_wrath_1.draw_image()

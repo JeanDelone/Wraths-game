@@ -84,11 +84,12 @@ def main():
 
     class Sword:
 
-        def __init__(self, x, y, image, owner):
+        def __init__(self, x, y, image, owner, is_flipped=False):
             self.x = x
             self.y = y
             self.image = image
             self.owner = owner
+            self.is_flipped = is_flipped
             self.rectangle = self.image.get_rect(topleft = (self.x, self.y))
 
     class Wrath:
@@ -101,7 +102,8 @@ def main():
             self.y = y
             self.image = image
             self.pressed_keys = pressed_keys
-            self.x_velocity = 10
+            self.x_default_speed = 10
+            self.x_velocity = 0
             self.y_velocity = 0
             self.jumps_left = 3
             self.image_flipped = pygame.transform.flip(self.image, True, False)
@@ -118,7 +120,14 @@ def main():
 
     #   natural_move() implicates gravity, makes sure that player won't go outside map, and resets jumps when player hits ground
         def natural_move(self):
+            if self.x_velocity != 0:
+                if self.x_velocity < 0.1 and self.x_velocity > -0.1:
+                    self.x_velocity = 0
+                self.x_velocity = self.x_velocity / 1.1
+            else:
+                self.rectangle.x += self.x_velocity
             self.y_velocity += 1.2
+            self.rectangle.x += self.x_velocity
             self.rectangle.y += self.y_velocity
             # This makes sure that player is always above 700 lvl, which is floor lvl
             if self.rectangle.y >= HEIGHT - 200:
@@ -182,16 +191,16 @@ def main():
         def move(self):
             if self.pressed_keys == key_presses_1:
                 if self.pressed_keys["a"] == True:
-                    self.rectangle.x -= self.x_velocity
+                    self.rectangle.x -= self.x_default_speed
                 if self.pressed_keys["d"] == True:
-                    self.rectangle.x += self.x_velocity
+                    self.rectangle.x += self.x_default_speed
                 if self.pressed_keys["s"] == True:
                     self.rectangle.y += 5
             else:
                 if self.pressed_keys["left"] == True:
-                    self.rectangle.x -= self.x_velocity
+                    self.rectangle.x -= self.x_default_speed
                 if self.pressed_keys["right"] == True:
-                    self.rectangle.x += self.x_velocity
+                    self.rectangle.x += self.x_default_speed
                 if self.pressed_keys["down"] == True:
                     self.rectangle.y += 5
 
@@ -203,26 +212,34 @@ def main():
                         self.attacked = False
                         self.cooldown = 15
                     else:
-                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks_flipped[self.cooldown - 1], self.name)
+                        current_sword = Sword(self.rectangle.x -68, self.rectangle.y +49, sword_attacks_flipped[self.cooldown - 1], self.name, is_flipped=True)
                         current_sword_list.append(current_sword)
-                        # those numbers: 68 and 50 came from width and height of the Wrath image,  im starting at topleft and move these coordinates to match flipped image
-                        WIN.blit(current_sword.image, (self.rectangle.x - 68, self.rectangle.y + 50))
+                        # print(f"F Sword topright: {current_sword_list[0].rectangle.topright}, {self.name}'s center:{self.rectangle.center}")
+                        WIN.blit(current_sword.image, (current_sword.x, current_sword.y))
                 else: 
                     if self.cooldown <= 0:
                         self.attacked = False
                         self.cooldown = 15
                     else:
-                        current_sword = Sword(self.rectangle.x, self.rectangle.y, sword_attacks[self.cooldown - 1], self.name)
+                        current_sword = Sword(self.rectangle.x +34, self.rectangle.y +50, sword_attacks[self.cooldown - 1], self.name)
                         current_sword_list.append(current_sword)
-                        # print(current_sword_list)
+                        # print(f"NF Sword topleft: {current_sword_list[0].rectangle.topleft}, {self.name}'s center:{self.rectangle.center}")
                         WIN.blit(current_sword.image, (self.rectangle.center))
 
+        # This is to repair
+        # !!!!!!!!!!!!!!!!!!
+        # Currently 2nd player's sword cant detect 1st player, 2nd player behaves weirdly on collision
         def sword_collision(self):
             for sword in current_sword_list:
                 if self.rectangle.colliderect(sword.rectangle) and sword.owner != self.name:
-                    # self.y = 500
-                    self.rectangle.y = 500
-                    print(f"COLLISION! {self.name} collided with {sword.owner}'s sword")
+                    if sword.is_flipped:
+                        self.y_velocity = -15
+                        self.x_velocity -= 50
+                        print(f"FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
+                    else:
+                        self.y_velocity = -15
+                        self.x_velocity += 50
+                        print(f"NON FLIPPED COLLISION! {self.name} collided with {sword.owner}'s sword")
 
         def draw_image(self):
             self.sword_collision()
@@ -266,9 +283,7 @@ def main():
 
             red_wrath_1.natural_move()
             pink_wrath_1.natural_move()
-            # if red_wrath_1.rectangle.colliderect(pink_wrath_1.rectangle):
-            #     if red_wrath_1.rectangle.right > pink_wrath_1.rectangle.left and red_wrath_1.rectangle.left < pink_wrath_1.rectangle.right:
-            #         red_wrath_1.rectangle.right = pink_wrath_1.rectangle.left
+            
             current_sword_list.clear()
         else:
             for event in pygame.event.get():

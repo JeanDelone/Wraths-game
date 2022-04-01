@@ -212,6 +212,7 @@ def main():
                         self.attacked = False
                         self.cooldown = 15
                     else:
+                        # Numbers that are added to rectangle.x and y are here to initiate sword at exactly middle of the player
                         current_sword = Sword(self.rectangle.x -68, self.rectangle.y +49, sword_attacks_flipped[self.cooldown - 1], self.name, is_flipped=True)
                         current_sword_list.append(current_sword)
                         # print(f"F Sword topright: {current_sword_list[0].rectangle.topright}, {self.name}'s center:{self.rectangle.center}")
@@ -255,8 +256,8 @@ def main():
 
 
     # Place to inicialize players
-    red_wrath_1 = Wrath("red", 500,600, red_wrath, key_presses_1)
-    pink_wrath_1 = Wrath("pink", 1100,600, pink_wrath, key_presses_2)
+    green_wrath_1 = Wrath("green", 300, 300, green_wrath, key_presses_2)
+    blue_wrath_1 = Wrath("blue", 900, 300, blue_wrath, key_presses_1)
 
     # Game active state determines if player is in the menu or in the game
     game_active = False
@@ -270,19 +271,20 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-                red_wrath_1.move_switch()
-                pink_wrath_1.move_switch()
+                green_wrath_1.move_switch()
+                blue_wrath_1.move_switch()
                 
-            red_wrath_1.move()
-            pink_wrath_1.move()
+            green_wrath_1.move()
+            blue_wrath_1.move()
 
             WIN.blit(background, (0,0))
 
-            red_wrath_1.draw_image()
-            pink_wrath_1.draw_image()
+            blue_wrath_1.draw_image()
+            green_wrath_1.draw_image()
+            blue_wrath_1.draw_image()
 
-            red_wrath_1.natural_move()
-            pink_wrath_1.natural_move()
+            green_wrath_1.natural_move()
+            blue_wrath_1.natural_move()
             
             current_sword_list.clear()
         else:

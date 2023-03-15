@@ -133,6 +133,11 @@ def main():
     #   natural_move() implicates gravity, makes sure that player won't go outside map, and resets jumps when player hits ground
         def natural_move(self):
             # Checks if player is hit, if so, it applies cooldown to prevent hitting player multiple times in few frames
+            if self.hp <= 0:
+                game_active = False
+                for player in players:
+                    player.hp = 100
+
             if self.is_hit:
                 self.hit_cooldown -= 1
                 if self.hit_cooldown == 1:
@@ -156,12 +161,12 @@ def main():
                 self.jumps_left = 3
             # This make sure that player doesn't go beyond walls and takes hp when standing too close to it
             if self.rectangle.left <= 30:
-                self.hp -= 0.25
+                self.hp -= 0.3
                 if self.rectangle.left <= 0:
                     self.rectangle.left = 0
                     self.x_velocity = - self.x_velocity
             elif self.rectangle.right >= WIDTH - 30:
-                self.hp -= 0.25
+                self.hp -= 0.3
                 if self.rectangle.right >= WIDTH:
                     self.rectangle.right = WIDTH
                     self.x_velocity = - self.x_velocity
@@ -282,7 +287,7 @@ def main():
     # Place to inicialize players
     green_wrath_1 = Wrath("green", first_player_starting_position[0], first_player_starting_position[1], green_wrath, key_presses_2)
     blue_wrath_1 = Wrath("blue", second_player_starting_position[0], second_player_starting_position[1], blue_wrath, key_presses_1)
-
+    players = [blue_wrath_1, green_wrath_1]
     # Game active state determines if player is in the menu or in the game
     game_active = False
 
